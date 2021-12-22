@@ -1,4 +1,4 @@
-import subprocess
+import io
 import yaml
 
 def turn_off_scene(scene_entity):
@@ -14,10 +14,11 @@ def turn_off_scene(scene_entity):
 @service
 def toggle_scene(scene_name):
   scene_id = state.getattr(scene_name)['id']
-  scenes = yaml.safe_load(subprocess.check_output(["cat", "scenes.yaml"]))
-  scene_entity = [scene for scene in scenes if scene['id'] == scene_id][0]
+  with io.open('scenes.yaml') as scenes_file:
+    scenes = yaml.safe_load(scenes_file)
+    scene_entity = [scene for scene in scenes if scene['id'] == scene_id][0]
 
-  if any([state.get(entity_id) == 'on' for entity_id in scene_entity['entities']]):
-    turn_off_scene(scene_entity)
-  else:
-    scene.turn_on(entity_id=scene_name)
+    if any([state.get(entity_id) == 'on' for entity_id in scene_entity['entities']]):
+      turn_off_scene(scene_entity)
+    else:
+      scene.turn_on(entity_id=scene_name)
