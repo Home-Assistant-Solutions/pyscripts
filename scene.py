@@ -17,9 +17,7 @@ def toggle_scene(scene_name):
   scenes = yaml.safe_load(subprocess.check_output(["cat", "scenes.yaml"]))
   scene_entity = [scene for scene in scenes if scene['id'] == scene_id][0]
 
-  for entity_id in scene_entity['entities']:
-    if state.get(entity_id) == 'on':
-      turn_off_scene(scene_entity)
-      return
-
-  scene.turn_on(entity_id=scene_name)
+  if any([state.get(entity_id) == 'on' for entity_id in scene_entity['entities']]):
+    turn_off_scene(scene_entity)
+  else:
+    scene.turn_on(entity_id=scene_name)
