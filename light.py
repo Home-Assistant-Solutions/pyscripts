@@ -28,3 +28,10 @@ def turn_on_light(light_id):
 @service
 def turn_off_light(light_id):
   light.turn_off(entity_id=light_id)
+
+@service
+def toggle_light(light_id):
+  if state.get(light_id) == 'on':
+    turn_off_light(light_id)
+  else:
+    turn_on_light(light_id)
