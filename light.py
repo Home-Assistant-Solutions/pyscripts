@@ -21,8 +21,15 @@ def get_light_state(light_id):
 
 @service
 def turn_on_light(light_id):
+  attr = state.getattr(light_id)
   light_state = get_light_state(light_id)
-  light.turn_on(entity_id=light_id, **light_state)
+
+  if 'entity_id' in attr and light_state != {}:
+    log.info(attr['entity_id'])
+    for light in attr['entity_id']:
+      turn_on_light(light)
+  else:
+    light.turn_on(entity_id=light_id, **light_state)
 
 @service
 def turn_off_light(light_id):
