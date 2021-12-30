@@ -34,10 +34,9 @@ def turn_on_light(light_id, scenes=None, default_brightness=None):
   attr = state.getattr(light_id)
   light_state = get_light_state(light_id, scenes_entities)
 
-  if 'entity_id' in attr:
-    if light_state == {}:
-      for light in attr['entity_id']:
-        turn_on_light(light, scenes, 0)
+  if 'entity_id' in attr and light_state == {}:
+    for light in attr['entity_id']:
+      turn_on_light(light, scenes, 0)
   else:
     if default_brightness != None:
       if light_state == {}:
