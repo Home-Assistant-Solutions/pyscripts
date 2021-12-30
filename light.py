@@ -4,6 +4,12 @@ import yaml
 with io.open('scenes.yaml', 'r') as scenes_file:
   scenes = yaml.safe_load(scenes_file)
 
+@event_trigger('scene_reloaded')
+def reload_scenes():
+  with io.open('scenes.yaml', 'r') as scenes_file:
+    global scenes
+    scenes = yaml.safe_load(scenes_file)
+
 def turn_off_entities(scene_entities):
   lights = [entity for entity in scene_entities if entity.startswith('light.')]
   switches = [entity for entity in scene_entities if entity.startswith('switch.')]
