@@ -51,6 +51,25 @@ def get_light_state(light_id, scenes_entities):
 
   return {}
 
+def get_scene_with_state(input_select):
+  scenes_with_input = [
+    scene 
+    for scene in scenes 
+    if input_select in scene['entities']
+  ]
+  return [
+    scene
+    for scene in scenes_with_input
+    if state.get(input_select) == scene['entities'][input_select]['state']
+  ][0]
+
+def get_scene_name(id):
+  return [
+    scene_name
+    for scene_name in state.names('scene')
+    if state.getattr(scene_name)['id'] == id
+  ][0]
+
 @service
 def turn_on_light(light_id, default_brightness=None):
   scenes_entities = [
@@ -93,23 +112,15 @@ def toggle_light(light_id):
 
 @service
 def turn_on_scene(input_select):
-  scenes_with_input = [
-    scene 
-    for scene in scenes 
-    if input_select in scene['entities']
-  ]
-  scene_with_state = [
-    scene
-    for scene in scenes_with_input
-    if state.get(input_select) == scene['entities'][input_select]['state']
-  ][0]
-  scene_name = [
-    scene_name
-    for scene_name in state.names('scene')
-    if state.getattr(scene_name)['id'] == scene_with_state['id']
-  ][0]
+  scene_with_state = get_scene_with_state(input_select)
 
-  scene.turn_on(entity_id=scene_name)
+  if all([
+    state.get(entity_id) == 'off' 
+    for entity_id in scene_with_state['entities']
+    if entity_id.startswith('light.') or entity_id.startswith('switch.')
+  ]):
+    scene_name = get_scene_name(scene_with_state['id'])
+    scene.turn_on(entity_id=scene_name)
 
 @service
 def turn_off_scene(scene_name):
@@ -122,15 +133,26 @@ def turn_off_scene(scene_name):
   turn_off_entities(scene_entities)
 
 @service
-def toggle_scene(scene_name):
-  scene_id = state.getattr(scene_name)['id']
+def toggle_scene(scene_name=None, input_select=None):
+  if scene_name:
+    scene_id = state.getattr(scene_name)['id']
+  else:
+    scene_with_state = get_scene_with_state(input_select)
+    scene_id = scene_with_state['id']
+
   scene_entities = [
     scene['entities'] 
     for scene in scenes 
     if scene['id'] == scene_id
   ][0]
 
-  if any([state.get(entity_id) == 'on' for entity_id in scene_entities]):
+  if any([
+    state.get(entity_id) == 'on' 
+    for entity_id in scene_entities
+    if entity_id.startswith('light.') or entity_id.startswith('switch.')
+  ]):
     turn_off_entities(scene_entities)
   else:
+    if scene_name == None:
+      scene_name = get_scene_name(scene_id)
     scene.turn_on(entity_id=scene_name)
