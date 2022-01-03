@@ -11,8 +11,16 @@ def reload_scenes():
     scenes = yaml.safe_load(scenes_file)
 
 def turn_off_entities(scene_entities):
-  lights = [entity for entity in scene_entities if entity.startswith('light.')]
-  switches = [entity for entity in scene_entities if entity.startswith('switch.')]
+  lights = [
+    entity 
+    for entity in scene_entities 
+    if entity.startswith('light.')
+  ]
+  switches = [
+    entity 
+    for entity in scene_entities 
+    if entity.startswith('switch.')
+  ]
 
   for light_id in lights:
     light.turn_off(entity_id=light_id)
@@ -45,7 +53,11 @@ def get_light_state(light_id, scenes_entities):
 
 @service
 def turn_on_light(light_id, default_brightness=None):
-  scenes_entities = [scene['entities'] for scene in scenes if light_id in scene['entities']]
+  scenes_entities = [
+    scene['entities'] 
+    for scene in scenes 
+    if light_id in scene['entities']
+  ]
   attr = state.getattr(light_id)
   light_state = get_light_state(light_id, scenes_entities)
 
@@ -80,15 +92,43 @@ def toggle_light(light_id):
     turn_on_light(light_id)
 
 @service
+def turn_on_scene(input_select):
+  scenes_with_input = [
+    scene 
+    for scene in scenes 
+    if input_select in scene['entities']
+  ]
+  scene_with_state = [
+    scene
+    for scene in scenes_with_input
+    if state.get(input_select) == scene['entities'][input_select]['state']
+  ][0]
+  scene_name = [
+    scene_name
+    for scene_name in state.names('scene')
+    if state.getattr(scene_name)['id'] == scene_with_state['id']
+  ][0]
+
+  scene.turn_on(entity_id=scene_name)
+
+@service
 def turn_off_scene(scene_name):
   scene_id = state.getattr(scene_name)['id']
-  scene_entities = [scene['entities'] for scene in scenes if scene['id'] == scene_id][0]
+  scene_entities = [
+    scene['entities'] 
+    for scene in scenes 
+    if scene['id'] == scene_id
+  ][0]
   turn_off_entities(scene_entities)
 
 @service
 def toggle_scene(scene_name):
   scene_id = state.getattr(scene_name)['id']
-  scene_entities = [scene['entities'] for scene in scenes if scene['id'] == scene_id][0]
+  scene_entities = [
+    scene['entities'] 
+    for scene in scenes 
+    if scene['id'] == scene_id
+  ][0]
 
   if any([state.get(entity_id) == 'on' for entity_id in scene_entities]):
     turn_off_entities(scene_entities)
