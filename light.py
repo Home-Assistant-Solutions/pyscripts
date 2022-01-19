@@ -28,6 +28,18 @@ def turn_off_entities(scene_entities):
   for switch_id in switches:
     switch.turn_off(entity_id=switch_id)
 
+def get_state_dict(light, state={}):
+  if 'brightness' in light:
+    state['brightness'] = light['brightness']
+  if 'hs_color' in light and not 'color_temp' in light:
+    state['hs_color'] = light['hs_color']
+  if 'color_temp' in light:
+    state['color_temp'] = light['color_temp']
+  if 'effect' in light:
+    state['effect'] = light['effect']
+
+  return state
+
 def get_light_state(light_id, scenes_entities):
   for entities in scenes_entities:
     input_selects = [entity for entity in entities if entity.startswith('input_select.')]
@@ -38,16 +50,7 @@ def get_light_state(light_id, scenes_entities):
           'supported_color_modes': entities[light_id]['supported_color_modes']
         }
 
-        if 'brightness' in entities[light_id]:
-          state['brightness'] = entities[light_id]['brightness']
-        if 'hs_color' in entities[light_id] and not 'color_temp' in entities[light_id]:
-          state['hs_color'] = entities[light_id]['hs_color']
-        if 'color_temp' in entities[light_id]:
-          state['color_temp'] = entities[light_id]['color_temp']
-        if 'effect' in entities[light_id]:
-          state['effect'] = entities[light_id]['effect']
-
-        return state
+        return get_state_dict(entities[light_id], state)
 
   return {}
 
@@ -111,16 +114,17 @@ def toggle_light(light_id):
     turn_on_light(light_id)
 
 @service
-def turn_on_scene(input_select):
-  scene_with_state = get_scene_with_state(input_select)
+def turn_on_scene(input_select_id):
+  scene_with_state = get_scene_with_state(input_select_id)
 
-  if all([
-    state.get(entity_id) == 'off' 
-    for entity_id in scene_with_state['entities']
-    if entity_id.startswith('light.') or entity_id.startswith('switch.')
-  ]):
-    scene_name = get_scene_name(scene_with_state['id'])
-    scene.turn_on(entity_id=scene_name)
+  for entity in scene_with_state['entities']:
+    if state.get(entity) == 'off' and scene_with_state['entities'][entity]['state'] == 'on':
+      if entity.startswith('light.'):
+        light.turn_on(entity_id=entity, **get_state_dict(entity))
+      if entity.startswith('switch.'):
+        switch.turn_on(entity_id=entity)
+    if entity.startswith('input_select.'):
+      input_select.select_option(entity_id=entity, option=scene_with_state['entities'][entity]['state'])
 
 @service
 def turn_off_scene(scene_name):
