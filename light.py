@@ -123,6 +123,22 @@ def turn_on_scene(input_select):
     scene.turn_on(entity_id=scene_name)
 
 @service
+def apply_scene(scene_name):
+  scene_id = state.getattr(scene_name)['id']
+  scene_entities = [
+    scene['entities'] 
+    for scene in scenes 
+    if scene['id'] == scene_id
+  ][0]
+
+  for entity_id in scene_entities:
+    if state.get(entity_id) == 'off' and scene_entities[entity_id]['state'] == 'on':
+      if entity_id.startswith('switch.'):
+        switch.turn_on(entity_id)
+      elif entity_id.startswith('light.'):
+        turn_on_light(entity_id)
+
+@service
 def turn_off_scene(scene_name):
   scene_id = state.getattr(scene_name)['id']
   scene_entities = [
