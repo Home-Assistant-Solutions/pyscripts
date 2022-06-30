@@ -67,7 +67,7 @@ def get_scene_name(id):
   return [
     scene_name
     for scene_name in state.names('scene')
-    if state.getattr(scene_name)['id'] == id
+    if 'id' in state.getattr(scene_name) and state.getattr(scene_name)['id'] == id
   ][0]
 
 @service
